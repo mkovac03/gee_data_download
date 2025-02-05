@@ -4,7 +4,7 @@ This project automates the downloading of Sentinel-2 NDVI data using Google Eart
 
 ## Features
 
-- **Automated Grid Export:** Exports a UTM grid to GEE assets if it doesn't already exist.
+- **Automated Grid Export:** Exports a UTM grid to GEE assets.
 - **Cloud Masking:** Uses Sentinel-2 QA bands to mask clouds and cirrus.
 - **Monthly NDVI Composites:** Generates monthly median NDVI composites.
 - **Multiprocessing:** Utilizes multiple CPU cores for parallel downloads.
