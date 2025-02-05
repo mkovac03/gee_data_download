@@ -72,9 +72,9 @@ Create a `config.json` file in the project root directory with the following con
 
 - **START_DATE**: Start date for image collection.
 - **END_DATE**: End date for image collection.
-- **CLOUD_THRESH**: Maximum allowed cloud cover percentage.
+- **CLOUD_THRESH**: Maximum allowed cloud cover percentage. Adjust when no images are available. 
 - **RES**: Resolution of output images in meters.
-- **GRID_SIZE**: Size of the grid cells (in meters).
+- **GRID_SIZE**: Size of the grid cells (in meters). Adjust when facing memory issues (eg. to 1000). 
 - **COUNTRY_NAME**: Country for which data will be downloaded.
 - **SATELLITE**: Satellite source (e.g., `S2` for Sentinel-2).
 - **INCREMENT**: Time increment for composites (`month`).
