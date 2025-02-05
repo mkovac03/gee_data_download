@@ -75,7 +75,7 @@ Create a `config.json` file in the project root directory with the following con
 - **CLOUD_THRESH**: Maximum allowed cloud cover percentage. Adjust when no images are available. 
 - **RES**: Resolution of output images in meters.
 - **GRID_SIZE**: Size of the grid cells (in meters). Adjust when facing memory issues (eg. to 1000). 
-- **COUNTRY_NAME**: Country for which data will be downloaded, using UN country names based on FAO GAUL: Global Administrative Unit Layers 2015 [https://developers.google.com/earth-engine/datasets/catalog/FAO_GAUL_2015_level0#table-schema]
+- **COUNTRY_NAME**: Country for which data will be downloaded. Use **UN country names** based on the [FAO GAUL: Global Administrative Unit Layers 2015](https://developers.google.com/earth-engine/datasets/catalog/FAO_GAUL_2015_level0#table-schema)
 - **SATELLITE**: Satellite source (e.g., `S2` for Sentinel-2).
 - **INCREMENT**: Time increment for composites (`month`).
 - **INTERVAL**: Interval length (e.g., 1 month).
