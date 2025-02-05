@@ -62,7 +62,7 @@ Create a `config.json` file in the project root directory with the following con
   "SATELLITE": "S2",
   "INCREMENT": "month",
   "INTERVAL": 1,
-  "ASSET_FOLDER": "projects/ee-gmkovacs/assets/grids/",
+  "ASSET_FOLDER": "projects/{your-cloud-project-id}/assets/grids/",
   "BANDS": ["NDVI"],
   "OUTPUT_DIR": "./output"
 }
@@ -79,7 +79,7 @@ Create a `config.json` file in the project root directory with the following con
 - **SATELLITE**: Satellite source (e.g., `S2` for Sentinel-2).
 - **INCREMENT**: Time increment for composites (`month`).
 - **INTERVAL**: Interval length (e.g., 1 month).
-- **ASSET_FOLDER**: Google Earth Engine asset folder for grids.
+- **ASSET_FOLDER**: Google Earth Engine asset folder for grids. Your project ID is under [Google Cloud Dashboard](https://console.cloud.google.com/home/dashboard).
 - **BANDS**: List of bands to download (e.g., `NDVI`).
 - **OUTPUT_DIR**: Root directory where output files will be saved.
 
