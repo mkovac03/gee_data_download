@@ -64,7 +64,8 @@ Create a `config.json` file in the project root directory with the following con
   "INTERVAL": 1,
   "ASSET_FOLDER": "projects/{your-cloud-project-id}/assets/grids/",
   "BANDS": ["NDVI"],
-  "OUTPUT_DIR": "./output"
+  "OUTPUT_DIR": "./output",
+  "NO_DATA_VALUE": -32768  
 }
 ```
 
@@ -82,6 +83,7 @@ Create a `config.json` file in the project root directory with the following con
 - **ASSET_FOLDER**: Google Earth Engine asset folder for grids. Your project ID is under [Google Cloud Dashboard](https://console.cloud.google.com/home/dashboard).
 - **BANDS**: List of bands to download (e.g., `NDVI`).
 - **OUTPUT_DIR**: Root directory where output files will be saved.
+- **NO_DATA_VALUE**: NoData value for missing pixels (`-32768`).
 
 ---
 
