@@ -126,7 +126,6 @@ def export_grid_to_asset():
         crs_code = \
         CRS.from_dict({'proj': 'utm', 'zone': get_utm_zone(country_fc.first()), 'south': False}).to_authority()[1]
         crs = f"EPSG:{crs_code}"
-        print(crs)
 
         # Create grid
         grid = country_fc.geometry().coveringGrid(crs, GRID_SIZE)
