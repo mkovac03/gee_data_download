@@ -53,6 +53,7 @@ SATELLITE = config['SATELLITE']
 INCREMENT = config['INCREMENT']
 INTERVAL = config['INTERVAL']
 ASSET_FOLDER = config['ASSET_FOLDER']
+NO_DATA_VALUE = config['NO_DATA_VALUE']
 
 # Retrieve country code from Earth Engine dataset
 country_fc = ee.FeatureCollection('FAO/GAUL/2015/level0').filter(ee.Filter.eq('ADM0_NAME', COUNTRY_NAME))
@@ -94,7 +95,7 @@ def get_monthly_ndvi(feature, month, index):
     start_date = ee.Date(f'{YEAR}-{month:02d}-01')
     end_date = start_date.advance(INTERVAL, INCREMENT)
     image_collection = getS2(feature, index)
-    monthly_ndvi = image_collection.filterDate(start_date, end_date).median()
+    monthly_ndvi = image_collection.filterDate(start_date, end_date).median().unmask(NO_DATA_VALUE)
     return monthly_ndvi
 
 
