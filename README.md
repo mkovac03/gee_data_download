@@ -51,17 +51,8 @@ Activate the environment using:
 conda activate gee_ndvi_download
 ```
 
-### 5. Run Jupyter Lab
 
-After activating the Conda environment, launch Jupyter Lab to run the notebook:
-
-```
-jupyter lab
-```
-
-This will open Jupyter Lab in your web browser, where you can navigate to smap_extraction.ipynb and execute the cells in sequence.
-
-### 6. Authenticate Google Earth Engine (First-Time Setup)
+### 5. Authenticate Google Earth Engine (First-Time Setup)
 
 The script will prompt for authentication the first time it is run. Alternatively, you can manually authenticate by running:
 
