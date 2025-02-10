@@ -23,7 +23,15 @@ This project automates the downloading of Sentinel-2 NDVI data using Google Eart
 
 If you don’t have Conda installed, download and install it from [Miniconda Installation](https://docs.anaconda.com/miniconda/install/).
 
-### 2. Create the Conda Environment
+### 2. Open Anaconda Prompt
+
+Make sure to run all the following commands from Anaconda Prompt (not from Windows CMD or PowerShell). To open Anaconda Prompt:
+
+Windows: Open Start Menu, search for Anaconda Prompt, and launch it.
+
+Mac/Linux: Open a terminal window.
+
+### 3. Create the Conda Environment
 
 To ensure all dependencies are correctly installed, use the provided `environment.yml` file to set up a Conda environment.
 
@@ -33,7 +41,7 @@ Run the following command in your terminal:
 conda env create -f environment.yml
 ```
 
-### 3. Activate the Environment
+### 4. Activate the Environment
 
 Activate the environment using:
 
@@ -41,7 +49,17 @@ Activate the environment using:
 conda activate gee_ndvi_download
 ```
 
-### 4. Authenticate Google Earth Engine (First-Time Setup)
+### 5. Run Jupyter Lab
+
+After activating the Conda environment, launch Jupyter Lab to run the notebook:
+
+```
+jupyter lab
+```
+
+This will open Jupyter Lab in your web browser, where you can navigate to smap_extraction.ipynb and execute the cells in sequence.
+
+### 6. Authenticate Google Earth Engine (First-Time Setup)
 
 The script will prompt for authentication the first time it is run. Alternatively, you can manually authenticate by running:
 
