@@ -25,7 +25,7 @@ If you don’t have Conda installed, download and install it from [Miniconda Ins
 
 ### 2. Open Anaconda Prompt
 
-'''Make sure to run all the following commands from Anaconda Prompt (not from Windows CMD or PowerShell).'''
+⚠️ IMPORTANT: Make sure to run all the following commands from Anaconda Prompt (not from Windows CMD or PowerShell). 
 
 To open Anaconda Prompt:
 
