@@ -78,8 +78,8 @@ Review the `config.json` file in the project root directory with the following c
   "INCREMENT": "month",
   "INTERVAL": 1,
   "ASSET_FOLDER": "projects/{your-cloud-project-id}/assets/grids/",
-  "BANDS": ["NDVI"],
-  "OUTPUT_DIR": "./output",
+  "BANDS": ["NDVI", "B4", "B8", "B11"],
+  "OUTPUT_DIR": "images/",
   "NO_DATA_VALUE": -32768  
 }
 ```
