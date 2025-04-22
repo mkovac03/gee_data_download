@@ -12,7 +12,7 @@ from math import floor
 from pyproj import CRS
 import json
 
-# Configure logging
+# Configure logging to show errors in red
 class RedFormatter(logging.Formatter):
     RED = '\033[31m'
     RESET = '\033[0m'
@@ -27,21 +27,21 @@ handler.setFormatter(RedFormatter('%(asctime)s - %(levelname)s - %(message)s'))
 logging.getLogger().addHandler(handler)
 logging.getLogger().setLevel(logging.INFO)
 
-# Load configuration
+# Load configuration from file
 with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
-# Initialize the Earth Engine module
+# Initialize the Earth Engine API
 try:
     ee.Initialize()
 except ee.EEException:
     ee.Authenticate()
     ee.Initialize()
 
-# Parameters
+# Load parameters from config file
 START_DATE = config['START_DATE']
 END_DATE = config['END_DATE']
-YEAR = START_DATE[:4]
+YEAR = START_DATE[:4]  # Extract year for folder naming
 CLOUD_THRESH = config['CLOUD_THRESH']
 RES = config['RES']
 GRID_SIZE = config['GRID_SIZE']
@@ -52,20 +52,20 @@ INTERVAL = config['INTERVAL']
 try:
     ASSET_FOLDER = config['ASSET_FOLDER']
 except KeyError:
-    logging.error(f"[31m{"'ASSET_FOLDER' is missing in config.json. Please make sure to set it to your GEE-enabled cloud project asset path."}[0m")
+    logging.error(f"'ASSET_FOLDER' is missing in config.json. Please make sure to set it to your GEE-enabled cloud project asset path.")
     raise SystemExit
 NO_DATA_VALUE = config['NO_DATA_VALUE']
 BANDS = config['BANDS']
 OUTPUT_DIR = config['OUTPUT_DIR']
 
-# Create output directory if it doesn't exist
+# Ensure output directory exists
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Retrieve country code from Earth Engine dataset
+# Get the country geometry from GAUL dataset
 country_fc = ee.FeatureCollection('FAO/GAUL/2015/level0').filter(ee.Filter.eq('ADM0_NAME', COUNTRY_NAME))
 ASSET_ID = f'{ASSET_FOLDER}{COUNTRY_NAME}_utm_grid_{GRID_SIZE // 1000}km'
 
-# Function to mask clouds using the Sentinel-2 QA band
+# Cloud masking function using Sentinel-2 QA band
 def maskS2clouds(image):
     qa = image.select('QA60')
     cloudBitMask = 1 << 10
@@ -73,13 +73,13 @@ def maskS2clouds(image):
     mask = qa.bitwiseAnd(cloudBitMask).eq(0).And(qa.bitwiseAnd(cirrusBitMask).eq(0))
     return image.updateMask(mask)
 
-# Function to add NDVI band
+# Add NDVI band to image
 def addS2Variables(image):
     return image.addBands(
         image.normalizedDifference(['B8', 'B4']).rename('NDVI').multiply(10000).toInt32()
     )
 
-# Function to retrieve Sentinel-2 imagery
+# Fetch filtered and processed Sentinel-2 image collection
 def getS2(feature, index):
     return ee.ImageCollection('COPERNICUS/S2_HARMONIZED') \
         .filterBounds(feature) \
@@ -89,22 +89,22 @@ def getS2(feature, index):
         .map(addS2Variables) \
         .select(BANDS)
 
-# Function to get monthly NDVI composites
-def get_monthly_ndvi(feature, month, index):
+# Create a monthly median composite image from the collection
+def get_monthly_imgs(feature, month, index):
     start_date = ee.Date(f'{YEAR}-{month:02d}-01')
     end_date = start_date.advance(INTERVAL, INCREMENT)
     image_collection = getS2(feature, index)
     monthly_ndvi = image_collection.filterDate(start_date, end_date).median().unmask(NO_DATA_VALUE)
     return monthly_ndvi
 
-# Function to get UTM zone from feature extent
+# Determine UTM zone based on feature centroid
 def get_utm_zone(feature):
     centroid = feature.geometry().centroid().coordinates().getInfo()
     lon = centroid[0]
     utm_zone = floor((lon + 180) / 6) + 1
     return utm_zone
 
-# Check if asset exists
+# Check if a GEE asset already exists
 def asset_exists(asset_id):
     try:
         ee.data.getAsset(asset_id)
@@ -114,7 +114,7 @@ def asset_exists(asset_id):
         logging.info(f"Asset {asset_id} does not exist.")
         return False
 
-# Export grid to GEE asset if it doesn't exist
+# Create and export a spatial grid to a GEE asset if it doesn't exist
 def export_grid_to_asset():
     if not asset_exists(ASSET_ID):
         logging.info("Exporting grid to GEE asset...")
@@ -136,8 +136,7 @@ def export_grid_to_asset():
                 assetId=ASSET_ID
             )
         except ee.EEException as e:
-            logging.error(f"Project ID is invalid. Make sure to update 'ASSET_FOLDER' in your config.json with a valid GEE-enabled Cloud Project ID.
-Details: {e}")
+            logging.error(f"[31mProject ID is invalid. Make sure to update 'ASSET_FOLDER' in your config.json with a valid GEE-enabled cloud project ID.\nDetails: {e}[0m")
             raise SystemExit
         task.start()
         logging.info('Grid export started.')
@@ -153,22 +152,23 @@ Details: {e}")
         else:
             logging.info('Grid export completed.')
     else:
-        logging.info("Grid already exists, skipping export.")
+        logging.info(f"Asset {ASSET_ID} already exists. Skipping export.")
 
-# Function to download multiband image for a given grid cell and month
-def download_ndvi(param):
+# Download the processed image as a multiband GeoTIFF
+def download_images(param):
     feature, month, index = param
     utm_zone = get_utm_zone(feature)
     crs_code = CRS.from_dict({'proj': 'utm', 'zone': utm_zone, 'south': False}).to_authority()[1]
     crs = f"EPSG:{crs_code}"
 
+    # Create a subfolder per country/year/month
     subfolder = os.path.join(OUTPUT_DIR, COUNTRY_NAME, YEAR, f"{month:02d}")
     os.makedirs(subfolder, exist_ok=True)
     output_path = os.path.join(subfolder, f'{SATELLITE}_{COUNTRY_NAME}_{YEAR}_{month:02d}_{INCREMENT}ly_median_{RES}m_{index}.tif')
 
     if not os.path.exists(output_path):
         try:
-            monthly_ndvi = get_monthly_ndvi(feature.geometry(), month, index)
+            monthly_ndvi = get_monthly_imgs(feature.geometry(), month, index)
             url = monthly_ndvi.getDownloadURL({
                 'bands': BANDS,
                 'region': feature.geometry(),
@@ -186,23 +186,25 @@ def download_ndvi(param):
     else:
         return output_path
 
+# Main entry point for script execution
 def main():
     export_grid_to_asset()
     logging.info("Reading grid from GEE asset...")
     grid = ee.FeatureCollection(ASSET_ID)
 
     logging.info("Preparing parameters for multiprocessing...")
-    months = list(range(1, 13))
+    months = list(range(1, 13))  # Loop through all months
     grid_list = grid.toList(grid.size()).getInfo()
     params = [(ee.Feature(grid_list[i]), month, i) for i in range(len(grid_list)) for month in months]
     logging.info(f"Total tasks to process: {len(params)}")
 
     logging.info("Starting multiprocessing download...")
-    num_cores = multiprocessing.cpu_count() - 1
+    num_cores = multiprocessing.cpu_count() - 1  # Use all but one core
     with multiprocessing.Pool(num_cores) as pool:
-        results = list(tqdm(pool.imap(download_ndvi, params), total=len(params)))
+        results = list(tqdm(pool.imap(download_images, params), total=len(params)))
     logging.info(f'Download completed. Total files: {len([r for r in results if r is not None])}')
 
+# Required for Windows multiprocessing compatibility
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     main()
