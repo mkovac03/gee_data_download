@@ -32,14 +32,11 @@ with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
 # Initialize the Earth Engine module
-logging.info("Initializing Earth Engine...")
 try:
     ee.Initialize()
 except ee.EEException:
-    logging.info("Authentication required. Starting authentication...")
     ee.Authenticate()
     ee.Initialize()
-logging.info("Earth Engine initialized.")
 
 # Parameters
 START_DATE = config['START_DATE']
@@ -56,6 +53,9 @@ ASSET_FOLDER = config['ASSET_FOLDER']
 NO_DATA_VALUE = config['NO_DATA_VALUE']
 BANDS = config['BANDS']
 OUTPUT_DIR = config['OUTPUT_DIR']
+
+# Create output directory if it doesn't exist
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Retrieve country code from Earth Engine dataset
 country_fc = ee.FeatureCollection('FAO/GAUL/2015/level0').filter(ee.Filter.eq('ADM0_NAME', COUNTRY_NAME))
@@ -146,16 +146,16 @@ def export_grid_to_asset():
     else:
         logging.info("Grid already exists, skipping export.")
 
-# Function to download NDVI for a given grid cell and month
+# Function to download multiband image for a given grid cell and month
 def download_ndvi(param):
     feature, month, index = param
     utm_zone = get_utm_zone(feature)
     crs_code = CRS.from_dict({'proj': 'utm', 'zone': utm_zone, 'south': False}).to_authority()[1]
     crs = f"EPSG:{crs_code}"
 
-    band_str = '_'.join(BANDS)
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    output_path = os.path.join(OUTPUT_DIR, f'{SATELLITE}_{COUNTRY_NAME}_{YEAR}_{month:02d}_{INCREMENT}ly_median_{RES}m_{band_str}_{index}.tif')
+    subfolder = os.path.join(OUTPUT_DIR, COUNTRY_NAME, YEAR, f"{month:02d}")
+    os.makedirs(subfolder, exist_ok=True)
+    output_path = os.path.join(subfolder, f'{SATELLITE}_{COUNTRY_NAME}_{YEAR}_{month:02d}_{INCREMENT}ly_median_{RES}m_{index}.tif')
 
     if not os.path.exists(output_path):
         try:
@@ -175,14 +175,12 @@ def download_ndvi(param):
             logging.error(f"Error downloading feature index {index} month {month}: {e}")
             return None
     else:
-        logging.info(f"File {output_path} already exists, skipping download.")
         return output_path
 
 def main():
     export_grid_to_asset()
     logging.info("Reading grid from GEE asset...")
     grid = ee.FeatureCollection(ASSET_ID)
-    logging.info("Grid read completed.")
 
     logging.info("Preparing parameters for multiprocessing...")
     months = list(range(1, 13))
