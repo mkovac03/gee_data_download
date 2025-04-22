@@ -1,4 +1,4 @@
-name: gee_ndvi_download
+name: gee_data_download
 channels:
   - conda-forge
   - defaults
