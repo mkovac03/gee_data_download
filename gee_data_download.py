@@ -49,7 +49,11 @@ COUNTRY_NAME = config['COUNTRY_NAME']
 SATELLITE = config['SATELLITE']
 INCREMENT = config['INCREMENT']
 INTERVAL = config['INTERVAL']
-ASSET_FOLDER = config['ASSET_FOLDER']
+try:
+    ASSET_FOLDER = config['ASSET_FOLDER']
+except KeyError:
+    logging.error(f"[31m{"'ASSET_FOLDER' is missing in config.json. Please make sure to set it to your GEE-enabled cloud project asset path."}[0m")
+    raise SystemExit
 NO_DATA_VALUE = config['NO_DATA_VALUE']
 BANDS = config['BANDS']
 OUTPUT_DIR = config['OUTPUT_DIR']
@@ -125,11 +129,16 @@ def export_grid_to_asset():
 
         logging.info(f"Grid generated with {grid_size} cells.")
 
-        task = ee.batch.Export.table.toAsset(
-            collection=grid,
-            description=f'{COUNTRY_NAME}_utm_grid_{GRID_SIZE // 1000}km',
-            assetId=ASSET_ID
-        )
+        try:
+            task = ee.batch.Export.table.toAsset(
+                collection=grid,
+                description=f'{COUNTRY_NAME}_utm_grid_{GRID_SIZE // 1000}km',
+                assetId=ASSET_ID
+            )
+        except ee.EEException as e:
+            logging.error(f"Project ID is invalid. Make sure to update 'ASSET_FOLDER' in your config.json with a valid GEE-enabled Cloud Project ID.
+Details: {e}")
+            raise SystemExit
         task.start()
         logging.info('Grid export started.')
 
