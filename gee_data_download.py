@@ -52,7 +52,7 @@ INTERVAL = config['INTERVAL']
 try:
     ASSET_FOLDER = config['ASSET_FOLDER']
 except KeyError:
-    logging.error(f"'ASSET_FOLDER' is missing in config.json. Please make sure to set it to your GEE-enabled cloud project asset path.")
+    logging.error("'ASSET_FOLDER' is missing in config.json. Please make sure to set it to your GEE-enabled cloud project asset path.")
     raise SystemExit
 NO_DATA_VALUE = config['NO_DATA_VALUE']
 BANDS = config['BANDS']
@@ -116,45 +116,56 @@ def asset_exists(asset_id):
 
 # Create and export a spatial grid to a GEE asset if it doesn't exist
 def export_grid_to_asset():
-    if not asset_exists(ASSET_ID):
-        logging.info("Exporting grid to GEE asset...")
-        crs_code = CRS.from_dict({'proj': 'utm', 'zone': get_utm_zone(country_fc.first()), 'south': False}).to_authority()[1]
-        crs = f"EPSG:{crs_code}"
-        grid = country_fc.geometry().coveringGrid(crs, GRID_SIZE)
-        grid_size = grid.size().getInfo()
-
-        if grid_size == 0:
-            logging.error("Generated grid is empty. Check the input parameters.")
-            return
-
-        logging.info(f"Grid generated with {grid_size} cells.")
-
-        try:
-            task = ee.batch.Export.table.toAsset(
-                collection=grid,
-                description=f'{COUNTRY_NAME}_utm_grid_{GRID_SIZE // 1000}km',
-                assetId=ASSET_ID
-            )
-        except ee.EEException as e:
-            logging.error(f"[31mProject ID is invalid. Make sure to update 'ASSET_FOLDER' in your config.json with a valid GEE-enabled cloud project ID.\nDetails: {e}[0m")
-            raise SystemExit
-        task.start()
-        logging.info('Grid export started.')
-
-        while task.active():
-            logging.info("Waiting for grid export to complete...")
-            time.sleep(30)
-
-        status = task.status()
-        if status['state'] != 'COMPLETED':
-            logging.error(
-                f"Error exporting grid. Task state: {status['state']}, Error message: {status.get('error_message', 'No error message provided')}")
-        else:
-            logging.info('Grid export completed.')
-    else:
+    # If asset exists, skip export
+    if asset_exists(ASSET_ID):
         logging.info(f"Asset {ASSET_ID} already exists. Skipping export.")
+        return
 
-# Download the processed image as a multiband GeoTIFF
+    # Generate grid
+    logging.info("Exporting grid to GEE asset...")
+    crs_code = CRS.from_dict({
+        'proj': 'utm', 'zone': get_utm_zone(country_fc.first()), 'south': False
+    }).to_authority()[1]
+    crs = f"EPSG:{crs_code}"
+    grid = country_fc.geometry().coveringGrid(crs, GRID_SIZE)
+    grid_size = grid.size().getInfo()
+    if grid_size == 0:
+        logging.error("Generated grid is empty. Check the input parameters.")
+        return
+    logging.info(f"Grid generated with {grid_size} cells.")
+
+    # Attempt export with error handling
+    try:
+        task = ee.batch.Export.table.toAsset(
+            collection=grid,
+            description=f"{COUNTRY_NAME}_utm_grid_{GRID_SIZE // 1000}km",
+            assetId=ASSET_ID
+        )
+        task.start()
+        logging.info("Grid export started.")
+    except ee.EEException as e:
+        # Print and log red error message
+        err_msg = (
+    f"{RedFormatter.RED}Your GEE project ID appears invalid or you lack permissions. Please update 'ASSET_FOLDER' in config.json to a valid GEE-enabled project asset path and enable the Earth Engine API. Visit https://console.cloud.google.com/"
+    f"Details: {e}{RedFormatter.RESET}")
+        logging.error(err_msg)
+        raise SystemExit
+
+    # Monitor export until completion
+    while task.active():
+        logging.info("Waiting for grid export to complete...")
+        time.sleep(30)
+
+    # Check export status
+    status = task.status()
+    if status.get('state') != 'COMPLETED':
+        logging.error(
+            f"Error exporting grid. State: {status.get('state')}, Error: {status.get('error_message', 'None')}"
+        )
+    else:
+        logging.info("Grid export completed.")
+
+# Download the processed image as a multiband GeoTIFF a multiband GeoTIFF GeoTIFF
 def download_images(param):
     feature, month, index = param
     utm_zone = get_utm_zone(feature)
@@ -187,6 +198,7 @@ def download_images(param):
         return output_path
 
 # Main entry point for script execution
+
 def main():
     export_grid_to_asset()
     logging.info("Reading grid from GEE asset...")
