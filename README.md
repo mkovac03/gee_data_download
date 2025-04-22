@@ -6,7 +6,7 @@ This project automates the downloading of Sentinel-2 data using Google Earth Eng
 
 - **Automated Grid Export:** Exports a UTM grid to GEE assets.
 - **Cloud Masking:** Uses Sentinel-2 QA bands to mask clouds and cirrus.
-- **Monthly NDVI Composites:** Generates monthly median NDVI composites.
+- **Monthly Composites:** Generates monthly median composites.
 - **Multiprocessing:** Utilizes multiple CPU cores for parallel downloads.
 - **Customizable Configurations:** Adjustable parameters via a `config.json` file.
 - **Environment Setup:** Easily set up a Conda environment with all required dependencies.
@@ -48,7 +48,7 @@ conda env create -f environment.yml
 Activate the environment using:
 
 ```
-conda activate gee_ndvi_download
+conda activate gee_data_download
 ```
 
 
@@ -109,12 +109,12 @@ Review the `config.json` file in the project root directory with the following c
 Execute the script to start downloading NDVI data:
 
 ```
-python gee_ndvi_download.py
+python gee_data_download.py
 ```
 
 ### 2. Output
 
-The downloaded NDVI images will be saved in the directory specified by the `OUTPUT_DIR` parameter in `config.json`. The output structure will look like this:
+The downloaded images will be saved in the directory specified by the `OUTPUT_DIR` parameter in `config.json`. The output structure will look like this:
 
 ```
 ./output/S2_Denmark_2018/Month_01/S2_Denmark_2018_01_monthly_median_10m_NDVI_0.tif
