@@ -1,6 +1,6 @@
 # GEE Data Download Script
 
-This project automates the downloading of Sentinel-2 NDVI data using Google Earth Engine (GEE). The script processes monthly NDVI composites over a specified country and time period, leveraging multiprocessing for faster downloads.
+This project automates the downloading of Sentinel-2 data using Google Earth Engine (GEE). The script processes monthly NDVI composites over a specified country and time period, leveraging multiprocessing for faster downloads.
 
 ## Features
 
