@@ -175,7 +175,7 @@ def export_grid_to_asset():
         logging.info("Grid export completed.")
 
 # Download the processed image as a multiband GeoTIFF
-def download_images(param, max_retries=10, base_wait=2.0):
+def download_images(param, max_retries=5, base_wait=2.0):
     feature, month, index = param
 
     subfolder = os.path.join(OUTPUT_DIR, COUNTRY_NAME, YEAR, f"{month:02d}")
