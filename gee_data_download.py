@@ -12,7 +12,6 @@ from math import floor
 from pyproj import CRS
 import json
 
-# Configure logging to show errors in red
 class RedFormatter(logging.Formatter):
     RED = '\033[31m'
     RESET = '\033[0m'
@@ -22,10 +21,20 @@ class RedFormatter(logging.Formatter):
             record.msg = f"{self.RED}{record.msg}{self.RESET}"
         return super().format(record)
 
+# Create custom handler with filter
+class WarningFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno != logging.WARNING  # suppress WARNINGs
+
 handler = logging.StreamHandler()
 handler.setFormatter(RedFormatter('%(asctime)s - %(levelname)s - %(message)s'))
-logging.getLogger().addHandler(handler)
-logging.getLogger().setLevel(logging.INFO)
+handler.addFilter(WarningFilter())  # <-- this line hides WARNINGs
+
+# Apply to root logger
+root_logger = logging.getLogger()
+root_logger.handlers = []  # clear existing
+root_logger.addHandler(handler)
+root_logger.setLevel(logging.INFO)
 
 # Load configuration from file
 with open('config.json', 'r') as config_file:
