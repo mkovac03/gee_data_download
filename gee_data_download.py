@@ -174,19 +174,21 @@ def export_grid_to_asset():
     else:
         logging.info("Grid export completed.")
 
-# Download the processed image as a multiband GeoTIFF a multiband GeoTIFF GeoTIFF
-def download_images(param):
+# Download the processed image as a multiband GeoTIFF a multiband GeoTIFF
+def download_images(param, max_retries=5, base_wait=1.0):
     feature, month, index = param
     utm_zone = get_utm_zone(feature)
     crs_code = CRS.from_dict({'proj': 'utm', 'zone': utm_zone, 'south': False}).to_authority()[1]
     crs = f"EPSG:{crs_code}"
 
-    # Create a subfolder per country/year/month
     subfolder = os.path.join(OUTPUT_DIR, COUNTRY_NAME, YEAR, f"{month:02d}")
     os.makedirs(subfolder, exist_ok=True)
     output_path = os.path.join(subfolder, f'{SATELLITE}_{COUNTRY_NAME}_{YEAR}_{month:02d}_{INCREMENT}ly_median_{RES}m_{index}.tif')
 
-    if not os.path.exists(output_path):
+    if os.path.exists(output_path):
+        return output_path
+
+    for attempt in range(max_retries):
         try:
             monthly_ndvi = get_monthly_imgs(feature.geometry(), month, index)
             url = monthly_ndvi.getDownloadURL({
@@ -196,15 +198,22 @@ def download_images(param):
                 'crs': crs,
                 'format': 'GEO_TIFF'
             })
-            response = requests.get(url)
+
+            response = requests.get(url, timeout=300)
+            response.raise_for_status()
+
             with open(output_path, 'wb') as f:
                 f.write(response.content)
+
             return output_path
+
         except Exception as e:
-            logging.error(f"Error downloading feature index {index} month {month}: {e}")
-            return None
-    else:
-        return output_path
+            if attempt < max_retries - 1:
+                wait_time = base_wait * (2 ** attempt)
+                time.sleep(wait_time)
+            else:
+                logging.error(f"Error downloading feature index {index} month {month}: {e}")
+                return None
 
 # Main entry point for script execution
 
