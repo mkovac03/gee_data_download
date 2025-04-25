@@ -1,19 +1,19 @@
 {
-  "START_DATE": "2018-01-01",                  // The inclusive start of your image time window
-  "END_DATE": "2019-01-01",                    // The exclusive end of your image time window
-  "CLOUD_THRESH": 60,                          // Max allowed cloud cover (%) per scene
-  "RES": 10,                                   // Output pixel resolution (in metres)
-  "GRID_SIZE": 5000,                           // Side length of each grid cell (in metres)
-  "COUNTRY_NAME": "Denmark",                   // The country to process (must match GAUL “ADM0_NAME”)
-  "SATELLITE": "S2",                           // Short label used in output filenames
-  "INCREMENT": "month",                        // Time increment for composites (“day”, “week”, “month”, “year”)
-  "INTERVAL": 1,                               // Number of increments per composite (1 → one‐month composites)
-  "ASSET_FOLDER": "projects/ee-gmkovacs/assets/", // EE asset folder for grids; replace your-project-id with your Google Cloud project ID.
-  "BANDS": ["NDVI", "B4", "B8", "B11"],        // Which bands to pull from the composite
-  "OUTPUT_DIR": "images/",                     // Local directory to write downloaded GeoTIFFs, change if needed
-  "NO_DATA_VALUE": -32768,                     // Fill value for masked‐out pixels
-  "UTM_GRID_ASSET": "users/gmkovacs/World_UTM_Grid", // Path to global UTM‐zone feature collection
-  "SOUTH": false,                              // Force southern‐hemisphere UTM projection? set true for SH
-  "MAX_RETRIES": 5,                            // How many times to retry a failed download
-  "BASE_WAIT": 2.0                             // Base wait time (s) for exponential back‐off between retries
+  "START_DATE": "2018-01-01",
+  "END_DATE":   "2019-01-01",
+  "CLOUD_THRESH": 60,
+  "RES": 10,
+  "GRID_SIZE": 5000,
+  "COUNTRY_NAME": "Denmark",
+  "SATELLITE": "S2",
+  "INCREMENT": "month",
+  "INTERVAL": 1,
+  "ASSET_FOLDER": "projects/your-project-id/assets/",
+  "BANDS": ["NDVI", "B4", "B8", "B11"],
+  "OUTPUT_DIR": "images/",
+  "NO_DATA_VALUE": -32768,
+  "UTM_GRID_ASSET": "users/gmkovacs/World_UTM_Grid",
+  "SOUTH": false,
+  "MAX_RETRIES": 5,
+  "BASE_WAIT": 2.0
 }
