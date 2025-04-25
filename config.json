@@ -8,7 +8,7 @@
   "SATELLITE": "S2",                           // Short label used in output filenames
   "INCREMENT": "month",                        // Time increment for composites (“day”, “week”, “month”, “year”)
   "INTERVAL": 1,                               // Number of increments per composite (1 → one‐month composites)
-  "ASSET_FOLDER": "projects/your-project-id/assets/", // EE asset folder for grids; replace your-project-id with your Google Cloud project ID.
+  "ASSET_FOLDER": "projects/ee-gmkovacs/assets/", // EE asset folder for grids; replace your-project-id with your Google Cloud project ID.
   "BANDS": ["NDVI", "B4", "B8", "B11"],        // Which bands to pull from the composite
   "OUTPUT_DIR": "images/",                     // Local directory to write downloaded GeoTIFFs, change if needed
   "NO_DATA_VALUE": -32768,                     // Fill value for masked‐out pixels
