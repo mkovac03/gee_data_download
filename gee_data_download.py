@@ -115,53 +115,20 @@ def get_monthly_imgs(feature, month, idx):
 
 # Export per-zone grids
 def export_zone_grids():
+    logging.info("Starting export of per-zone grids…")
     utm_zone = utm_grid.filterBounds(country_fc)
     zones = list(utm_zone.aggregate_histogram('ZONE').getInfo().keys())
     zone_info = []
     for z in zones:
         zone = int(z)
-        logging.info(f"Preparing zone {zone}")
         zone_poly = utm_grid.filter(ee.Filter.eq('ZONE', zone)).geometry()
-        # intersect country geometry with zone polygon
         clipped = country_fc.geometry().intersection(zone_poly, 1)
-        # check for empty by area == 0
         try:
             area_sq_m = clipped.area().getInfo()
         except Exception as e:
-            logging.error(f"Error computing intersection area for zone {zone}: {e}")
+            logging.error(f"Error computing area for zone {zone}: {e}")
             continue
         if area_sq_m == 0:
-            logging.info(f"  no overlap for zone {zone}")
-            continue
-        epsg = int(CRS.from_dict({'proj':'utm','zone':zone,'south':SOUTH}).to_authority()[1])
-        crs  = f"EPSG:{epsg}"
-        grid = clipped.coveringGrid(crs, GRID_SIZE).map(lambda f: f.set('ZONE', zone))
-        asset_id = f"{ASSET_FOLDER}{COUNTRY_NAME}_utm_grid_{GRID_SIZE//1000}km_zone{zone}"
-        if not asset_exists(asset_id):
-            task = ee.batch.Export.table.toAsset(
-                collection=grid,
-                description=f"{COUNTRY_NAME}_grid_{GRID_SIZE}_zone{zone}",
-                assetId=asset_id
-            )
-            task.start()
-            while task.active():
-                time.sleep(10)
-        else:
-            logging.info(f"  asset {asset_id} exists")
-        zone_info.append((zone, epsg, crs, asset_id))
-    if not zone_info:
-        logging.error("No UTM zones found; exiting.")
-        sys.exit(1)
-    return zone_info
-
-# Download images = []
-    for z in zones:
-        zone = int(z)
-        logging.info(f"Preparing zone {zone}")
-        zone_poly = utm_grid.filter(ee.Filter.eq('ZONE', zone)).geometry()
-        clipped = country_fc.geometry().intersection(zone_poly, 1)
-        if clipped.isEmpty().getInfo():
-            logging.info(f"  no overlap for zone {zone}")
             continue
         epsg = int(CRS.from_dict({'proj':'utm','zone':zone,'south':SOUTH})
                    .to_authority()[1])
@@ -169,6 +136,7 @@ def export_zone_grids():
         grid = clipped.coveringGrid(crs, GRID_SIZE).map(lambda f: f.set('ZONE', zone))
         asset_id = f"{ASSET_FOLDER}{COUNTRY_NAME}_utm_grid_{GRID_SIZE//1000}km_zone{zone}"
         if not asset_exists(asset_id):
+            logging.info(f"  Exporting grid asset {asset_id}")
             task = ee.batch.Export.table.toAsset(
                 collection=grid,
                 description=f"{COUNTRY_NAME}_grid_{GRID_SIZE}_zone{zone}",
@@ -176,16 +144,19 @@ def export_zone_grids():
             )
             task.start()
             while task.active():
+                logging.info(f"    Waiting for export of zone {zone}…")
                 time.sleep(10)
+            logging.info(f"  Export of zone {zone} completed.")
         else:
-            logging.info(f"  asset {asset_id} exists")
+            logging.info(f"  Asset {asset_id} already exists, skipping export.")
         zone_info.append((zone, epsg, crs, asset_id))
     if not zone_info:
         logging.error("No UTM zones found; exiting.")
         sys.exit(1)
+    logging.info("Finished exporting all zone grids.")
     return zone_info
 
-# Download images
+# Download images per feature
 def download_images(params):
     feature, month, idx, crs, epsg = params
     out_dir = os.path.join(OUTPUT_DIR, COUNTRY_NAME, YEAR, f"{month:02d}")
@@ -214,26 +185,26 @@ def download_images(params):
                     dst.set_band_description(bi, bn)
             return outp
         except Exception as e:
-            logging.warning(f"Retry {i+1}/{MAX_RETRIES} for z{epsg} m{month} idx{idx}: {e}")
+            logging.warning(f"    Retry {i+1}/{MAX_RETRIES} failed: {e}")
             time.sleep(BASE_WAIT * (2**i))
-    logging.error(f"Failed z{epsg} m{month} idx{idx}")
+    logging.error(f"Failed to download after retries: {filename}")
     return None
 
 # Main
 def main():
-    zones = export_zone_grids()
+    zone_info = export_zone_grids()
     months = list(range(1, 13))
     cores = max(1, multiprocessing.cpu_count() - 1)
-    for zone, epsg, crs, aid in zones:
-        logging.info(f"Downloading zone {zone} EPSG{epsg}")
+    for zone, epsg, crs, aid in zone_info:
         fc = ee.FeatureCollection(aid)
         lst = fc.toList(fc.size()).getInfo()
         params = [(ee.Feature(lst[i]), m, i, crs, epsg)
                   for i in range(len(lst)) for m in months]
+        logging.info(f"  Total tasks for this zone: {len(params)}")
         with multiprocessing.Pool(cores) as pool:
             results = list(tqdm(pool.imap(download_images, params), total=len(params)))
-        succ = sum(r is not None for r in results)
-        logging.info(f"Zone {zone}: {succ}/{len(params)} downloaded")
+        succeeded = sum(r is not None for r in results)
+        logging.info(f"Zone {zone}: {succeeded}/{len(params)} succeeded.")
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
