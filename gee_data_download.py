@@ -162,7 +162,7 @@ def download_images(params):
     out_dir = os.path.join(OUTPUT_DIR, COUNTRY_NAME, YEAR, f"{month:02d}")
     os.makedirs(out_dir, exist_ok=True)
     filename = (f"{SATELLITE}_{COUNTRY_NAME}_{YEAR}_{month:02d}_"
-                f"{INCREMENT}ly_{RES}m_z{epsg}_{idx}.tif")
+                f"{INCREMENT}ly_{RES}m_{epsg}_{idx}.tif")
     outp = os.path.join(out_dir, filename)
     if os.path.exists(outp):
         return outp
